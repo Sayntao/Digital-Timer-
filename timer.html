@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timer</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #timer {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      background: #fff;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #controls button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      margin: 0.2rem;
+      border: none;
+      border-radius: 0.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+    #controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #controls button:hover:not(:disabled) {
+      background: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div id="timer">00:00:00</div>
+  <div id="controls">
+    <button id="edit">Edit</button>
+    <button id="start" disabled>Start</button>
+    <button id="pause" disabled>Pause</button>
+    <button id="resume" disabled>Resume</button>
+    <button id="reset" disabled>Reset</button>
+  </div>
+  <script>
+    const timerDisplay = document.getElementById('timer');
+    const editBtn = document.getElementById('edit');
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pause');
+    const resumeBtn = document.getElementById('resume');
+    const resetBtn = document.getElementById('reset');
+
+    let originalTime = 0; // in seconds
+    let remainingTime = 0;
+    let intervalId = null;
+
+    function formatTime(seconds) {
+      const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function updateDisplay(time) {
+      timerDisplay.textContent = formatTime(time);
+    }
+
+    function enableButton(btn, enabled) {
+      btn.disabled = !enabled;
+    }
+
+    editBtn.addEventListener('click', () => {
+      const input = prompt('Set timer (in seconds, e.g., 90 for 1m30s):', remainingTime || originalTime || 0);
+      const secs = parseInt(input, 10);
+      if (!isNaN(secs) && secs >= 0) {
+        originalTime = secs;
+        remainingTime = secs;
+        updateDisplay(remainingTime);
+        enableButton(startBtn, remainingTime > 0);
+        enableButton(resetBtn, remainingTime > 0);
+        enableButton(pauseBtn, false);
+        enableButton(resumeBtn, false);
+      } else {
+        alert('Invalid input. Please enter a non-negative integer.');
+      }
+    });
+
+    startBtn.addEventListener('click', () => {
+      if (remainingTime <= 0) return;
+      enableButton(startBtn, false);
+      enableButton(editBtn, false);
+      enableButton(pauseBtn, true);
+      enableButton(resetBtn, true);
+      intervalId = setInterval(() => {
+        remainingTime--;
+        updateDisplay(remainingTime);
+        if (remainingTime <= 0) {
+          clearInterval(intervalId);
+          enableButton(pauseBtn, false);
+          enableButton(resumeBtn, false);
+          enableButton(editBtn, true);
+          alert('Time is up!');
+        }
+      }, 1000);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      clearInterval(intervalId);
+      enableButton(pauseBtn, false);
+      enableButton(resumeBtn, true);
+    });
+
+    resumeBtn.addEventListener('click', () => {
+      enableButton(resumeBtn, false);
+      enableButton(pauseBtn, true);
+      intervalId = setInterval(() => {
+        remainingTime--;
+        updateDisplay(remainingTime);
+        if (remainingTime <= 0) {
+          clearInterval(intervalId);
+          enableButton(pauseBtn, false);
+          enableButton(resumeBtn, false);
+          enableButton(editBtn, true);
+          alert('Time is up!');
+        }
+      }, 1000);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      clearInterval(intervalId);
+      remainingTime = originalTime;
+      updateDisplay(remainingTime);
+      enableButton(startBtn, remainingTime > 0);
+      enableButton(pauseBtn, false);
+      enableButton(resumeBtn, false);
+      enableButton(editBtn, true);
+    });
+  </script>
+</body>
+</html>
